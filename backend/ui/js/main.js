@@ -1,6 +1,14 @@
 (function() {
 	
 	var beacons = [];
+	var $submit = null;
+	var $modal = null;
+	
+	var showModal = function(title, msg, callback) {
+		$modal.find(".modal-title").text(title);
+		$modal.find(".modal-body").html(msg);
+		$modal.modal("show");
+	}
 	
 	var onSubmit = function() {
 		var uuid = $("#beacon-id").val();
@@ -8,6 +16,8 @@
 		if (uuid) {
 			console.log("Updating beacon " + uuid);
 			console.log($("#safety").val());
+			
+			$submit.attr("disabled","disabled");
 			
 			var request = $.ajax("beacon?uuid=" + uuid, {
 				dataType: "json",
@@ -19,12 +29,17 @@
 			
 			request.done(function(data, status, hdr) {
 				console.log("Request OK");
-				console.log(data);
+				showModal("Beacon Updated", "Beacon successfully updated");
 			});
 			
 			request.fail(function(hdr, status, error) {
 				console.log("Request FAIL");
+				showModal("Error", "Failed to update beacon");
 				console.log(error);
+			});
+			
+			request.always(function() {
+				$submit.removeAttr("disabled");
 			});
 		}
 		else {
@@ -45,12 +60,19 @@
 		// Beacon ID
 		$("#beacon-id").on("change", onSelectBeacon);
 		
+		// Modal dialog
+		$modal = $("#update-beacon-popup").modal({
+			backdrop: "static",
+			show: false
+		});
+		
 		// Form submit button
-		var $formSubmit = $("#update-beacon input[type=\"submit\"]");
-		$formSubmit.on("click", function(event) {
-			event.preventDefault();
-			onSubmit();
-		}).attr("disabled", "disabled");
+		$submit = $("#update-beacon input[type=\"submit\"]")
+			.on("click", function(event) {
+				event.preventDefault();
+				onSubmit();
+			})
+			.attr("disabled", "disabled");
 		
 		// Get beacon list
 		var request = $.ajax("beaconList", {
@@ -73,7 +95,7 @@
 					}
 					$beaconId.val(beacons[0].uuid);
 					onSelectBeacon();
-					$formSubmit.removeAttr("disabled");
+					$submit.removeAttr("disabled");
 				}
 				else
 					console.log("Could not find beacon ID control");

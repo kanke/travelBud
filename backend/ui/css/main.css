@@ -1,0 +1,14 @@
+h1 {
+	font-size: 16px;
+	font-weight: bold;
+	margin-top: 0px;
+	margin-bottom: 20px;
+}
+
+select#beacon-id {
+	max-width: 350px;
+}
+
+textarea#safety {
+	max-width: 500px;
+}

@@ -3,6 +3,7 @@
 	"description": "Backend for TravelBud",
 	"version": "1.0.0",
 	"dependencies": {
-		"sqlite3": "3.0.8"
+		"sqlite3": "3.0.8",
+		"mime": "1.3.4"
 	}
 }
