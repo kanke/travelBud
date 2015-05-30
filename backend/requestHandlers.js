@@ -48,8 +48,9 @@ function beacon(response, request) {
 	
 	if (query.uuid === undefined) {
 		response.writeHead(400, {"Content-Type": "text/html"});
-		response.write("Could not find beacon - UUID required");
+		response.write(JSON.stringify({error: "Could not find beacon - UUID required"}));
 		response.end();
+		return;
 	}
 	
 	var uuid = query.uuid.toUpperCase();

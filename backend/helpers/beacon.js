@@ -84,6 +84,10 @@ var Beacon = function(uuid) {
 	}
 };
 
+var addBeacon = function(uuid) {
+	
+};
+
 var getBeacon = function(uuid, options, onLoad, onFail) {
 	var beacon = new Beacon(uuid);
 	beacon.load(options, onLoad, onFail);
