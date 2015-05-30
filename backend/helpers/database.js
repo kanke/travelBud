@@ -48,8 +48,56 @@ var getBeacon = function(uuid, success, fail) {
 	return true;	
 };
 
+var setBeacon = function(uuid, params, success, fail) {
+	
+	if (typeof(params) !== "object") {
+		console.log("DATABASE: Set beacon called with invalid params");
+		return false;
+	}
+	
+	success = (typeof(success) === "function") ? success : null;
+	fail = (typeof(fail) === "function") ? fail : null;
+	
+	var query = "UPDATE beacons SET ";
+	var values = [];
+	if (params.safety) {
+		query = query + "safety = ?"
+		values.push(params.safety);
+	}
+	if (values.length > 0) {
+		var db = ensureDB();
+		if (!db)
+			return false;
+		
+		query = query + " WHERE uuid = ?";
+		values.push(uuid);
+		
+		console.log("DATABASE: Saving beacon " + uuid + " properties to database");
+		
+		db.serialize(function() {
+			db.run(query, values, function(err, row) {
+				if (err) {
+					console.log("DATABASE: Error in query (" + err.message + ")");
+					if (fail) fail(err);
+				}
+				else {
+					if (success) success();
+				}
+			});
+		});
+	}
+	else {
+		console.log("DATABASE: Set beacon called with no params to set");
+		return false;
+	}
+	
+};
+
 var getBeaconList = function(success, fail) {
 	console.log("DATABASE: Getting beacon list");
+	
+	success = (typeof(success) === "function") ? success : null;
+	fail = (typeof(fail) === "function") ? fail : null;
 	
 	var db = ensureDB();
 	if (!db)
@@ -67,4 +115,5 @@ var getBeaconList = function(success, fail) {
 };
 
 exports.getBeacon = getBeacon;
+exports.setBeacon = setBeacon;
 exports.getBeaconList = getBeaconList;

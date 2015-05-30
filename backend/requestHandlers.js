@@ -4,6 +4,26 @@ var url = require("url");
 var database = require("./helpers/database");
 var beaconLib = require("./helpers/beacon");
 
+/* Return beacon as JSON */
+function getBeaconJSON(uuid, options, response) {
+	beaconLib.getBeacon(uuid, options,
+		function(b) {
+			response.writeHead(200, {"Content-Type": "text/json"});
+			response.write(JSON.stringify({
+				uuid: b.uuid,
+				safety: b.safety,
+				station: b.station
+			}));
+			response.end();
+		},
+		function(err) {
+			response.writeHead(400, {"Content-Type": "text/json"});
+			response.write("{error: \"Error loading beacon: " + err + "\"}");
+			response.end();	
+		}
+	);
+}
+
 function index(response) {
 	fs.readFile('./ui/index.html', function (err, html) {
 		if (err) {
@@ -33,31 +53,38 @@ function beacon(response, request) {
 	}
 	
 	var uuid = query.uuid.toUpperCase();
-	var options = {
-		loadStation: true
-	};
-	if (query.direction) {
-		options.direction = query.direction;
-	}
 	
-	// Get beacon data from database
-	var b = new beaconLib.Beacon(uuid);
-	b.load(options,
-		function() {
-			response.writeHead(200, {"Content-Type": "text/json"});
-			response.write(JSON.stringify({
-				uuid: b.uuid,
-				safety: b.safety,
-				station: b.station
-			}));
-			response.end();
-		},
-		function(err) {
-			response.writeHead(400, {"Content-Type": "text/json"});
-			response.write("{error: \"Error loading beacon: " + err + "\"}");
-			response.end();	
+	// Get Post data
+	var postData = "";
+	request.setEncoding("utf8");
+	request.addListener("data", function(postDataChunk) {
+		postData += postDataChunk;
+	});
+	
+	request.addListener("end", function() {
+		
+		if (postData.length > 0) {
+			postData = querystring.parse(postData);
+			values = {};
+			if (typeof(postData.safety) === "string") {
+				values.safety = postData.safety
+			}
+			beaconLib.setBeacon(uuid, values, function() {
+				getBeaconJSON(uuid, {}, response);
+			}, 
+			function() {
+				response.writeHead(400, {"Content-Type": "text/json"});
+				response.write("{error: \"Error saving beacon: " + err + "\"}");
+				response.end();	
+			});
 		}
-	);
+		else {
+			getBeaconJSON(uuid, {
+				loadStation: true,
+				direction: query.direction || ""
+			}, response);
+		}
+	});
 };
 
 var beaconList = function(response) {
@@ -66,7 +93,6 @@ var beaconList = function(response) {
 		for (var i in rows) {
 			beacons.push(rows[i]);
 		}
-		
 		response.writeHead(200, {"Content-Type": "text/json"});
 		response.write(JSON.stringify({beacons: beacons}));
 		response.end();	

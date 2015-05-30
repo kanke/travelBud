@@ -25,7 +25,7 @@ var Beacon = function(uuid) {
 						function(stop) {			
 							self.station = stop;
 							if (onLoad)
-								onLoad();
+								onLoad(self);
 						}, 
 						function(err) {
 							if (typeof(err) === "object") err = err.msg;
@@ -63,7 +63,7 @@ var Beacon = function(uuid) {
 					if (options.loadStation)
 						self.updateApi(options, onLoad, onFail);
 					else
-						onLoad();
+						onLoad(self);
 				}
 				else {
 					if (onFail)
@@ -76,7 +76,36 @@ var Beacon = function(uuid) {
 					self.onFail("Error retrieving beacon from database: " + err);
 			}
 		);
-	}	
+	}
+	
+	/* Save beacon to database */
+	this.save = function(onSave, onFail) {
+		database.setBeacon(uuid, {safety: this.safety}, onSave, onFail);
+	}
 };
 
-exports.Beacon = Beacon;
+var getBeacon = function(uuid, options, onLoad, onFail) {
+	var beacon = new Beacon(uuid);
+	beacon.load(options, onLoad, onFail);
+};
+
+var setBeacon = function(uuid, data, onSet, onFail) {
+	var beacon = new Beacon(uuid);
+	beacon.load({}, function() {
+		var changed = false;
+		if (typeof(data.safety) === "string") {
+			beacon.safety = data.safety;
+			console.log("Set beacon " + uuid + " safety message to \"" + data.safety + "\"");
+			changed = true;
+		}
+		if (changed)
+			beacon.save(onSet, onFail);
+		else {
+			if (typeof(onSet) === "function") 
+				onSet();
+		}
+	}, onFail);
+}
+
+exports.getBeacon = getBeacon;
+exports.setBeacon = setBeacon;
