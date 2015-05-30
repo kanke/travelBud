@@ -1,0 +1,8 @@
+{
+	"name": "travelbud",
+	"description": "Backend for TravelBud",
+	"version": "1.0.0",
+	"dependencies": {
+		"sqlite3": "3.0.8"
+	}
+}
