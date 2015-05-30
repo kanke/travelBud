@@ -3,16 +3,20 @@ var sqlite3 = require("sqlite3").verbose();
 
 var DB_FILE = "travelbud.db";
 
+var ensureDB = function() {
+	var exists = fs.existsSync(DB_FILE);
+	if (!exists) {
+		console.log("DATABASE: Missing database file " + DB_FILE);
+		return false;
+	}
+	else
+		return new sqlite3.Database(DB_FILE);
+}
+
 var getBeacon = function(uuid, success, fail) {
 	
 	if (typeof(uuid) !== "string") {
 		console.log("DATABASE: Invalid beacon UUID " + uuid);
-		return false;
-	}
-
-	var exists = fs.existsSync(DB_FILE);
-	if (!exists) {
-		console.log("DATABASE: Missing database file " + DB_FILE);
 		return false;
 	}
 	
@@ -21,7 +25,9 @@ var getBeacon = function(uuid, success, fail) {
 	
 	console.log("DATABASE: Getting beacon info for uuid " + uuid);
 	
-	var db = new sqlite3.Database(DB_FILE);
+	var db = ensureDB();
+	if (!db)
+		return false;
 	
 	db.serialize(function() {
 		db.get("SELECT * FROM beacons " + 
@@ -40,6 +46,25 @@ var getBeacon = function(uuid, success, fail) {
 	
 	db.close();
 	return true;	
-}
+};
+
+var getBeaconList = function(success, fail) {
+	console.log("DATABASE: Getting beacon list");
+	
+	var db = ensureDB();
+	if (!db)
+		return false;
+	
+	db.all("SELECT uuid, safety FROM beacons", function(err, rows) {
+		if (err) {
+			console.log("DATABASE: Error in query (" + err.message + ")");
+			if (fail) fail(err);
+		}
+		else {
+			if (success) success(rows);
+		}
+	});
+};
 
 exports.getBeacon = getBeacon;
+exports.getBeaconList = getBeaconList;

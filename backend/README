@@ -1,0 +1,19 @@
+Setting up the Node.js server:
+
+Install Node.js 
+https://nodejs.org/download/
+
+Install Bower
+npm install -g bower
+
+Run package installer in home directory
+npm install
+
+Install sqlite and run database setup .sql script
+https://www.sqlite.org/download.html
+sqlite3
+sqlite3> .read travelBud.sql
+
+Run bower installer to create front end
+cd html
+bower install

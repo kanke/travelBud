@@ -1,0 +1,7 @@
+{
+	"name": "travelBud-client",
+	"dependencies": {
+		"bootstrap": "3.3.4"
+	},
+	"analytics": false
+}

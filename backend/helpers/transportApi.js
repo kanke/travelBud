@@ -15,7 +15,6 @@ var processDepartures = function(departures, options) {
 		
 	var output = [];
 	for (var route in departures) {
-		console.log("Departures " + route);
 		for (var j in departures[route]) {
 			var dep = departures[route][j];
 			if (!options.direction || options.direction == dep.direction)

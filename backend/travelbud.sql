@@ -1,7 +1,8 @@
 DROP TABLE IF EXISTS beacons;
 CREATE TABLE beacons (
 	id INTEGER PRIMARY KEY,
-	uuid VARCHAR(48) NOT NULL
+	uuid VARCHAR(48) NOT NULL,
+	safety TEXT DEFAULT ""
 );
 
 DROP TABLE IF EXISTS stations;
@@ -18,9 +19,10 @@ CREATE TABLE beacons_stations (
 	platform VARCHAR(255)
 );
 
-INSERT INTO beacons (id, uuid) VALUES 
-	(1, "1E9E354C-F44D-4B08-ABBF-40014FE9CC26"),
-	(2, "F890A9E5-EA2D-4B0F-972B-922F625F72DC");
+INSERT INTO beacons (id, uuid, safety) VALUES 
+	(1, "1E9E354C-F44D-4B08-ABBF-40014FE9CC26", "Roadworks 20m north of bus stop"),
+	(2, "F890A9E5-EA2D-4B0F-972B-922F625F72DC", "Pavement dug up 10m south of bus stop"),
+	(3, "C48C6716-193F-477B-B73A-C550CE582A22", "");
 
 INSERT INTO stations (id, transport, code) VALUES
 	(1, "bus", "490007960R"),
@@ -29,4 +31,5 @@ INSERT INTO stations (id, transport, code) VALUES
 
 INSERT INTO beacons_stations (beacon_id, station_id, platform) VALUES
 	(1, 1, NULL),
-	(2, 3, NULL);
+	(2, 3, NULL),
+	(3, 2, NULL);

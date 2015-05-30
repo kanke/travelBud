@@ -1,0 +1,28 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html"; charset="UTF-8"/>
+</head>
+<body>
+<h1>Update Beacon Safety Information</h1>
+<form id="update-beacon" action="beacon" method="post">
+
+	<div>
+		<label for="beacon-id">Beacon</label>
+		<select id="beacon-id" name="beacon-id">
+		</select>
+	</div>
+	
+	<div>
+		<label for="safety">Safety information</label>
+		<textarea id="safety" name="safety" rows="5" cols="40"></textarea>
+	</div>
+	
+	<div>
+		<input type="submit" value="Update Beacon"/>
+	</div>
+</form>
+
+<script type="text/javascript" src="ui/bower_components/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="ui/js/main.js"></script>
+</body>
+</html>
