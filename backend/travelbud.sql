@@ -21,15 +21,15 @@ CREATE TABLE beacons_stations (
 
 INSERT INTO beacons (id, uuid, safety) VALUES 
 	(1, "1E9E354C-F44D-4B08-ABBF-40014FE9CC26", "Roadworks 20m north of bus stop"),
-	(2, "F890A9E5-EA2D-4B0F-972B-922F625F72DC", "Pavement dug up 10m south of bus stop"),
-	(3, "C48C6716-193F-477B-B73A-C550CE582A22", "");
+	(2, "F890A9E5-EA2D-4B0F-972B-922F625F72DC", "Security barrier set up left of beacon"),
+	(3, "C48C6716-193F-477B-B73A-C550CE582A22", "Pavement dug up 10m south of bus stop");
 
 INSERT INTO stations (id, transport, code) VALUES
 	(1, "bus", "490007960R"),
 	(2, "bus", "490004996U"),
-	(3, "airport", "");
+	(3, "airport", "LHR");
 
 INSERT INTO beacons_stations (beacon_id, station_id, platform) VALUES
 	(1, 1, NULL),
-	(2, 3, NULL),
+	(2, 3, "A20"),
 	(3, 2, NULL);

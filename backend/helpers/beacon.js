@@ -1,4 +1,5 @@
 var database = require("./database");
+var airportApi = require("./airportApi");
 var transportApi = require("./transportApi");
 
 var Beacon = function(uuid) {
@@ -44,8 +45,25 @@ var Beacon = function(uuid) {
 				}
 				break;
 				
-			//case "airport":
-			//	break;
+			case "airport":
+				if (self.stationCode) {
+					airportApi.getAirport(self.stationCode, 
+						function(airport) {			
+							self.station = airport;
+							if (onLoad)
+								onLoad(self);
+						}, 
+						function(err) {
+							if (typeof(err) === "object") err = err.msg;
+							if (onFail)
+								onFail("Error retrieving airport data - " + err);
+						}
+					);
+				}
+				else {
+					onFail("Error retrieving airport data - code missing");
+				}
+				break;
 				
 			default:
 				onFail("Station type " + self.transport + " not implemented");
