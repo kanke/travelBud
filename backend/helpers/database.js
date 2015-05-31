@@ -13,21 +13,55 @@ var ensureDB = function() {
 		return new sqlite3.Database(DB_FILE);
 }
 
-var getBeacon = function(uuid, success, fail) {
-	
-	if (typeof(uuid) !== "string") {
-		console.log("DATABASE: Invalid beacon UUID " + uuid);
-		return false;
-	}
+var checkBeacon = function(uuid, success, fail) {
 	
 	success = (typeof(success) === "function") ? success : null;
 	fail = (typeof(fail) === "function") ? fail : null;
 	
+	if (typeof(uuid) !== "string") {
+		if (fail) fail("Invalid beacon UUID " + uuid);
+		return;
+	}
+
+	console.log("DATABASE: Checking beacon info for uuid " + uuid);
+	
+	var db = ensureDB();
+	if (!db) {
+		if (fail) fail("Could not connect to database");
+		return;
+	}
+	
+	db.get("SELECT * FROM beacons " + 
+			"WHERE beacons.uuid=?", uuid, function(err, row) {
+		if (err) {
+			console.log("DATABASE: Error in query (" + err.message + ")");
+			if (fail) fail(err);
+		}
+		else {
+			if (success) success(row !== undefined);
+		}
+	});
+	
+	db.close();	
+}
+
+var getBeacon = function(uuid, success, fail) {
+	
+	success = (typeof(success) === "function") ? success : null;
+	fail = (typeof(fail) === "function") ? fail : null;
+	
+	if (typeof(uuid) !== "string") {
+		if (fail) fail("Invalid beacon UUID " + uuid);
+		return;
+	}
+	
 	console.log("DATABASE: Getting beacon info for uuid " + uuid);
 	
 	var db = ensureDB();
-	if (!db)
-		return false;
+	if (!db) {
+		if (fail) fail("Could not connect to database");
+		return;
+	}
 	
 	db.serialize(function() {
 		db.get("SELECT * FROM beacons " + 
@@ -44,19 +78,42 @@ var getBeacon = function(uuid, success, fail) {
 		});
 	});
 	
-	db.close();
-	return true;	
+	db.close();	
 };
 
-var setBeacon = function(uuid, params, success, fail) {
-	
-	if (typeof(params) !== "object") {
-		console.log("DATABASE: Set beacon called with invalid params");
-		return false;
-	}
+var addBeacon = function(uuid, success, fail) {
 	
 	success = (typeof(success) === "function") ? success : null;
 	fail = (typeof(fail) === "function") ? fail : null;
+	
+	var db = ensureDB();
+	if (!db) {
+		if (fail) fail("Could not connect to database");
+		return;
+	}
+	
+	db.run("INSERT INTO beacons (uuid) VALUES (?)", uuid, function(err) {
+		if (err) {
+			console.log("DATABASE: Error in query (" + err.message + ")");
+			if (fail) fail(err);
+		}
+		else {
+			if (success) success();
+		}
+	});
+	
+	db.close();
+}
+
+var setBeacon = function(uuid, params, success, fail) {
+	
+	success = (typeof(success) === "function") ? success : null;
+	fail = (typeof(fail) === "function") ? fail : null;
+	
+	if (typeof(params) !== "object") {
+		if (fail) fail("Set beacon called with invalid params");
+		return;
+	}
 	
 	var query = "UPDATE beacons SET ";
 	var values = [];
@@ -66,25 +123,27 @@ var setBeacon = function(uuid, params, success, fail) {
 	}
 	if (values.length > 0) {
 		var db = ensureDB();
-		if (!db)
-			return false;
+		if (!db) {
+			if (fail) fail("Could not connect to database");
+			return;
+		}
 		
 		query = query + " WHERE uuid = ?";
 		values.push(uuid);
 		
 		console.log("DATABASE: Saving beacon " + uuid + " properties to database");
 		
-		db.serialize(function() {
-			db.run(query, values, function(err, row) {
-				if (err) {
-					console.log("DATABASE: Error in query (" + err.message + ")");
-					if (fail) fail(err);
-				}
-				else {
-					if (success) success();
-				}
-			});
+		db.run(query, values, function(err) {
+			if (err) {
+				console.log("DATABASE: Error in query (" + err.message + ")");
+				if (fail) fail(err);
+			}
+			else {
+				if (success) success();
+			}
 		});
+		
+		db.close();
 	}
 	else {
 		console.log("DATABASE: Set beacon called with no params to set");
@@ -100,8 +159,10 @@ var getBeaconList = function(success, fail) {
 	fail = (typeof(fail) === "function") ? fail : null;
 	
 	var db = ensureDB();
-	if (!db)
-		return false;
+	if (!db) {
+		if (fail) fail("Could not connect to database");
+		return;
+	}
 	
 	db.all("SELECT uuid, safety FROM beacons", function(err, rows) {
 		if (err) {
@@ -112,8 +173,12 @@ var getBeaconList = function(success, fail) {
 			if (success) success(rows);
 		}
 	});
+	
+	db.close();
 };
 
+exports.checkBeacon = checkBeacon;
+exports.addBeacon = addBeacon;
 exports.getBeacon = getBeacon;
 exports.setBeacon = setBeacon;
 exports.getBeaconList = getBeaconList;

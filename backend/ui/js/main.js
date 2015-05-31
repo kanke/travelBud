@@ -29,7 +29,8 @@
 			
 			request.done(function(data, status, hdr) {
 				console.log("Request OK");
-				showModal("Beacon Updated", "Beacon successfully updated");
+				showModal("Beacon Updated", 
+					"Beacon safety data successfully updated - thank you!");
 			});
 			
 			request.fail(function(hdr, status, error) {

@@ -16,7 +16,12 @@ var Beacon = function(uuid) {
 	this.updateApi = function(options, onLoad, onFail) {
 		options = (options || {});
 		onLoad = (typeof(onLoad) === "function") ? onLoad : null;
-		onFail = (typeof(onFail) === "function") ? onFail : null;
+		onFail = (typeof(onFail) === "function") ? onFail : null
+		
+		if (!this.transport) {
+			onFail("Error retrieving stop data - transport type missing");
+			return;
+		}
 		
 		switch(this.transport) {
 			case "bus":	
@@ -47,6 +52,19 @@ var Beacon = function(uuid) {
 		}
 	};
 	
+	/* Create a new beacon in the database */
+	this.create = function(onLoad, onFail) {
+		onLoad = (typeof(onLoad) === "function") ? onLoad : null;
+		onFail = (typeof(onFail) === "function") ? onFail : null;
+		database.checkBeacon(self.uuid, function(exists) {
+			if (exists)
+				onFail("Beacon with UUID " + self.uuid + " already exists");
+			else
+				database.addBeacon(self.uuid, onLoad, onFail);
+		}, onFail);
+	};
+	
+	/* Load beacon from database */
 	this.load = function(options, onLoad, onFail) {
 		onLoad = (typeof(onLoad) === "function") ? onLoad : null;
 		onFail = (typeof(onFail) === "function") ? onFail : null;
@@ -56,14 +74,19 @@ var Beacon = function(uuid) {
 		
 		database.getBeacon(self.uuid, 
 			function(row) {
-				if (row && row.transport) {
+				if (row) {
 					self.safety = (row.safety || "");
-					self.transport = row.transport;
-					self.stationCode = (row.code || "");
-					if (options.loadStation)
-						self.updateApi(options, onLoad, onFail);
-					else
+					if (row.transport) {
+						self.transport = row.transport;
+						self.stationCode = (row.code || "");
+						if (options.loadStation)
+							self.updateApi(options, onLoad, onFail);
+						else
+							onLoad(self);
+					}
+					else {
 						onLoad(self);
+					}
 				}
 				else {
 					if (onFail)
@@ -80,12 +103,34 @@ var Beacon = function(uuid) {
 	
 	/* Save beacon to database */
 	this.save = function(onSave, onFail) {
-		database.setBeacon(uuid, {safety: this.safety}, onSave, onFail);
+		var params = {safety: this.safety};
+		database.setBeacon(uuid, params, onSave, onFail);
 	}
 };
 
-var addBeacon = function(uuid) {
-	
+var update = function(beacon, data, onSave, onFail) {
+	var changed = false;
+	if (typeof(data.safety) === "string") {
+		beacon.safety = data.safety;
+		console.log("Set beacon " + beacon.uuid + " safety message to \"" + data.safety + "\"");
+		changed = true;
+	}
+	if (changed) {
+		beacon.save(onSave, onFail);
+	}
+	else {
+		if (typeof(onSave) === "function") 
+			onSave();
+	}
+};
+
+var addBeacon = function(uuid, data, onCreate, onFail) {
+	data = data || {};
+	var beacon = new Beacon(uuid);
+	beacon.create(function() {
+		console.log("Created beacon");
+		update(beacon, data, onCreate, onFail);
+	}, onFail);
 };
 
 var getBeacon = function(uuid, options, onLoad, onFail) {
@@ -94,22 +139,13 @@ var getBeacon = function(uuid, options, onLoad, onFail) {
 };
 
 var setBeacon = function(uuid, data, onSet, onFail) {
+	data = data || {};
 	var beacon = new Beacon(uuid);
 	beacon.load({}, function() {
-		var changed = false;
-		if (typeof(data.safety) === "string") {
-			beacon.safety = data.safety;
-			console.log("Set beacon " + uuid + " safety message to \"" + data.safety + "\"");
-			changed = true;
-		}
-		if (changed)
-			beacon.save(onSet, onFail);
-		else {
-			if (typeof(onSet) === "function") 
-				onSet();
-		}
+		update(beacon, data, onSet, onFail);
 	}, onFail);
 }
 
+exports.addBeacon = addBeacon;
 exports.getBeacon = getBeacon;
 exports.setBeacon = setBeacon;

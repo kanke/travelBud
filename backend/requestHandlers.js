@@ -39,23 +39,8 @@ function index(response) {
 	});
 }
 
-function beacon(response, request) {
-	console.log("Received request for beacon.");
-	
-	// Get Beacon UUID
-	var queryStr = url.parse(request.url).query;
-	var query = querystring.parse(queryStr);
-	
-	if (query.uuid === undefined) {
-		response.writeHead(400, {"Content-Type": "text/html"});
-		response.write(JSON.stringify({error: "Could not find beacon - UUID required"}));
-		response.end();
-		return;
-	}
-	
-	var uuid = query.uuid.toUpperCase();
-	
-	// Get Post data
+/* Process a beacon post (update) request */
+function beaconPost(uuid, response, request) {
 	var postData = "";
 	request.setEncoding("utf8");
 	request.addListener("data", function(postDataChunk) {
@@ -63,7 +48,6 @@ function beacon(response, request) {
 	});
 	
 	request.addListener("end", function() {
-		
 		if (postData.length > 0) {
 			postData = querystring.parse(postData);
 			values = {};
@@ -80,12 +64,81 @@ function beacon(response, request) {
 			});
 		}
 		else {
-			getBeaconJSON(uuid, {
-				loadStation: true,
-				direction: query.direction || ""
-			}, response);
+			getBeaconJSON(uuid, {}, response);
 		}
+	});	
+}
+
+/* Process a beacon put (create) request */
+function beaconPut(uuid, response, request) {
+	
+	var putData = "";
+	request.setEncoding("utf8");
+	request.addListener("data", function(putDataChunk) {
+		putData += putDataChunk;
 	});
+	
+	request.addListener("end", function() {
+		if (putData.length > 0) {
+			putData = querystring.parse(putData);
+			values = {};
+			if (typeof(putData.safety) === "string") {
+				values.safety = putData.safety
+			}
+			beaconLib.addBeacon(uuid, values, function() {
+				getBeaconJSON(uuid, {}, response);
+			}, 
+			function(err) {
+				response.writeHead(400, {"Content-Type": "text/json"});
+				response.write("{error: \"Error saving beacon: " + err + "\"}");
+				response.end();	
+			});
+		}
+		else {
+			getBeaconJSON(uuid, {}, response);
+		}
+	});	
+}
+
+function beacon(response, request) {
+	
+	// Get Beacon UUID
+	var queryStr = url.parse(request.url).query;
+	var query = querystring.parse(queryStr);
+	
+	if (query.uuid === undefined) {
+		response.writeHead(400, {"Content-Type": "text/html"});
+		response.write(JSON.stringify({error: "Could not find beacon - UUID required"}));
+		response.end();
+		return;
+	}
+	
+	var uuid = query.uuid.toUpperCase();
+	var options = {
+		direction: query.direction || ""
+	};
+	
+	switch (request.method.toUpperCase())
+	{
+		case "POST":
+			console.log("Received POST request for beacon " + uuid);
+			beaconPost(uuid, response, request);
+			break;
+			
+		case "PUT":
+			console.log("Received PUT request for beacon " + uuid);
+			beaconPut(uuid, response, request);
+			break;
+			
+		case "GET":
+		default:
+			console.log("Received request for beacon " + uuid);
+			options.loadStation = true;
+			getBeaconJSON(uuid, options, response);
+			break;
+	}
+	
+	
 };
 
 var beaconList = function(response) {
